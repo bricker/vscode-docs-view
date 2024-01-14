@@ -1,13 +1,11 @@
-import json5 from 'json5';
+import { SyncHighlightFunction } from 'marked-highlight';
 import * as shiki from 'shiki';
-import type { IShikiTheme, Theme } from 'shiki-themes';
-import { Highlighter } from 'shiki/dist/highlighter';
 import * as vscode from 'vscode';
 
 declare const TextDecoder: any;
 
 // Default themes use `include` option that shiki doesn't support
-const defaultThemesMap = new Map<string, Theme>([
+const defaultThemesMap = new Map<string, shiki.Theme>([
 	['Default Light+', 'light-plus'],
 	['Default Dark+', 'dark-plus'],
 ]);
@@ -30,7 +28,7 @@ export class CodeHighlighter {
 
 	private readonly _disposables: vscode.Disposable[] = [];
 
-	private _highlighter?: Promise<Highlighter>;
+	private _highlighter?: Promise<shiki.Highlighter>;
 
 	constructor() {
 		this._needsRender = new vscode.EventEmitter<void>();
@@ -58,16 +56,16 @@ export class CodeHighlighter {
 		}
 	}
 
-	public async getHighlighter(document: vscode.TextDocument): Promise<(code: string, language: string) => string> {
+	public async getHighlighter(document: vscode.TextDocument): Promise<SyncHighlightFunction> {
 		const highlighter = await this._highlighter;
 
-		return (code: string, inputLanguage: string): string => {
+		return (code: string, inputLanguage: string, _info: string): string => {
 			const language = inputLanguage || document.languageId;
 			if (language && highlighter) {
 				try {
 					const languageId = getLanguageId(language);
 					if (languageId) {
-						return highlighter.codeToHtml!(code, languageId);
+						return highlighter.codeToHtml(code, { lang: languageId });
 					}
 				} catch (err) {
 					// noop
@@ -83,8 +81,8 @@ export class CodeHighlighter {
 		this._highlighter = shiki.getHighlighter({ theme });
 	}
 
-	private static async getShikiTheme(): Promise<IShikiTheme | undefined> {
-		let theme: string | IShikiTheme | undefined;
+	private static async getShikiTheme(): Promise<shiki.IShikiTheme | undefined> {
+		let theme: string | shiki.IShikiTheme | undefined;
 
 		const currentThemeName = vscode.workspace.getConfiguration('workbench').get<string>('colorTheme');
 		if (currentThemeName && defaultThemesMap.has(currentThemeName)) {
@@ -92,7 +90,7 @@ export class CodeHighlighter {
 		} else if (currentThemeName) {
 			const colorThemePath = getCurrentThemePath(currentThemeName);
 			if (colorThemePath) {
-				theme = shiki.loadTheme(colorThemePath.fsPath);
+				theme = await shiki.loadTheme(colorThemePath.fsPath);
 
 				theme.name = 'random'; // Shiki doesn't work without name and defaults to `Nord`
 
@@ -107,7 +105,7 @@ export class CodeHighlighter {
 		}
 
 		if (typeof theme === 'string') {
-			theme = shiki.getTheme(theme as any);
+			theme = await shiki.loadTheme(theme);
 		}
 
 		if (theme) {
@@ -133,7 +131,7 @@ async function getDefaultForeground(uri: vscode.Uri): Promise<string> {
 	try {
 		const buffer = await vscode.workspace.fs.readFile(uri);
 		const contents = new TextDecoder("utf-8").decode(buffer);
-		const json = json5.parse(contents);
+		const json = JSON.parse(contents);
 
 		// Prefer using the explicit `editor.foreground` if it is set
 		const editorForeground = json.colors?.['editor.foreground'];
@@ -215,7 +213,7 @@ const languages = [
 	{ name: 'handlebars', language: 'handlebars', identifiers: ['handlebars', 'hbs'], source: 'text.html.handlebars' },
 	{ name: 'markdown', language: 'markdown', identifiers: ['markdown', 'md'], source: 'text.html.markdown' },
 	{ name: 'haskell', language: 'haskell', identifiers: ['hs', 'lhs'], source: 'text.html.hs' },
-	{ name: 'ocaml', language: 'ocaml', identifiers: ['ml', 'mli', 'eliom', 'eliomi'], source: 'source.ocaml.interface' },	
+	{ name: 'ocaml', language: 'ocaml', identifiers: ['ml', 'mli', 'eliom', 'eliomi'], source: 'source.ocaml.interface' },
 	{ name: 'zig', language: 'zig', identifiers: ['zig'], source: 'source.zig' },
 	{ name: 'd', language: 'd', identifiers: ['d'], source: 'source.d' },
 ];

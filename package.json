@@ -107,23 +107,28 @@
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"dependencies": {
-		"json5": "^2.1.3",
-		"marked": "^4.0.15",
-		"oniguruma": "^7.2.1",
-		"shiki": "^0.2.5",
-		"shiki-themes": "^0.2.5"
+		"canvas": "^2.11.2",
+		"dompurify": "^3.0.8",
+		"jsdom": "^23.2.0",
+		"marked": "^11.1.1",
+		"marked-highlight": "^2.1.0",
+		"shiki": "^0.14.6"
 	},
 	"devDependencies": {
-		"@types/json5": "0.0.30",
-		"@types/marked": "^4.0.3",
+		"@types/jsdom": "^21.1.6",
 		"@types/node": "^14.11.2",
 		"@types/vscode": "^1.85.0",
 		"@typescript-eslint/eslint-plugin": "^3.0.2",
 		"@typescript-eslint/parser": "^3.0.2",
 		"eslint": "^7.1.0",
+		"node-loader": "^2.0.0",
 		"ts-loader": "^8.0.4",
 		"typescript": "^4.6.4",
 		"webpack": "^5.72.0",
 		"webpack-cli": "^4.9.0"
+	},
+	"optionalDependencies": {
+		"bufferutil": "^4.0.8",
+		"utf-8-validate": "^6.0.3"
 	}
 }

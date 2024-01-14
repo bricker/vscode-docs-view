@@ -1,6 +1,12 @@
-import { marked } from 'marked';
+import { markedHighlight } from 'marked-highlight';
 import * as vscode from 'vscode';
 import { CodeHighlighter } from './codeHighlighter';
+import { Marked } from 'marked';
+import { JSDOM } from 'jsdom';
+import DOMPurify from 'dompurify';
+
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
 
 export class Renderer {
 
@@ -34,16 +40,21 @@ export class Renderer {
 			return '';
 		}
 
-		const markdown = parts.join('\n---\n');
+		const markdown = purify(parts.join('\n---\n'));
 
 		const highlighter = await this._highlighter.getHighlighter(document);
-		return marked(markdown, {
-			highlight: highlighter,
-			sanitize: true
-		});
+
+		const marked = new Marked(
+			markedHighlight({
+				highlight: highlighter,
+			})
+		);
+
+		const html = await marked.parse(markdown);
+		return html;
 	}
 
-	private getMarkdown(content: vscode.MarkedString): string {
+	private getMarkdown(content: vscode.MarkdownString | vscode.MarkedString): string {
 		if (typeof content === 'string') {
 			return content;
 		} else if (content instanceof vscode.MarkdownString) {

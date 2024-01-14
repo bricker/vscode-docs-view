@@ -25,7 +25,7 @@ const config = {
         vscode: "commonjs vscode",
         shiki: "commonjs shiki"
     },
-    resolve: { 
+    resolve: {
         extensions: ['.ts', '.js']
     },
     module: {
@@ -40,6 +40,10 @@ const config = {
                     }
                 }
             }]
+        },
+        {
+            test: /\.node$/,
+            use: 'node-loader'
         }]
     },
 }
